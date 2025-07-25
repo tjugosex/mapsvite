@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { createNoise2D } from "simplex-noise";
+import { Country } from "../objects/Country.js";
 
 export class Game extends Scene {
   constructor() {
@@ -19,7 +20,9 @@ export class Game extends Scene {
     this.simplex = createNoise2D();
 
     let mapArray = [];
-    let waterLevel = 0.24;
+    let waterLevel = 0.20;
+    this.claimed = new Set();
+
     for (let y = 0; y < height; y++) {
       const row = [];
       for (let x = 0; x < width; x++) {
@@ -30,7 +33,7 @@ export class Game extends Scene {
         let normalized = (value + 1) / 2;
 
         // Apply edge falloff
-        const falloff = edgeFalloff(x, y, width, height, 3); // Power controls steepness
+        const falloff = edgeFalloff(x, y, width, height, 2); // Power controls steepness
         normalized *= 1 - falloff; // Less land at edges
 
         // Optional: sharpen
@@ -49,6 +52,8 @@ export class Game extends Scene {
         if (normalized >= waterLevel) {
           if (getAdjacent(mapArray, x, y)) {
             ctx.fillStyle = `rgba(14, 14, 14, 1)`;
+          } else if (normalized < 0.23) {
+            ctx.fillStyle = `rgba(127, 228, 12, 1)`; // sand
           } else if (normalized < 0.45) {
             ctx.fillStyle = `rgba(0, 187, 0, 1)`; // land
           } else if (normalized < 0.6) {
@@ -56,7 +61,7 @@ export class Game extends Scene {
           } else {
             ctx.fillStyle = `rgb(200, 255, 200)`; // hills
           }
-        } else if (normalized < 0.3) {
+        } else {
           ctx.fillStyle = `rgb(0, 0, 255)`; // water
         }
 
@@ -64,9 +69,54 @@ export class Game extends Scene {
       }
     }
     canvas.refresh();
-    
+
     this.add.image(width, height, "noiseCanvas").setOrigin(1);
 
+    this.countries = [];
+
+    this.input.on("pointermove", (pointer) => {
+      const x = Math.floor(pointer.x);
+      const y = Math.floor(pointer.y);
+
+      if (x >= 0 && x < mapArray[0].length && y >= 0 && y < mapArray.length) {
+        console.log(x, y, mapArray[y][x]);
+      }
+    });
+
+    this.input.on("pointerdown", (pointer) => {
+      const x = Math.floor(pointer.x);
+      const y = Math.floor(pointer.y);
+      const key = `${x},${y}`;
+
+      // Check if the location is over land and not already claimed
+      if (
+        x >= 0 &&
+        x < mapArray[0].length &&
+        y >= 0 &&
+        y < mapArray.length &&
+        mapArray[y][x] >= waterLevel &&
+        !this.claimed.has(key)
+      ) {
+        const color = `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+          Math.random() * 255
+        )}, ${Math.floor(Math.random() * 255)}, 0.73)`;
+
+        const newCountry = new Country(
+          this,
+          x,
+          y,
+          canvas,
+          mapArray,
+          waterLevel,
+          color,
+          this.claimed
+        );
+
+        this.countries.push(newCountry);
+      }
+    });
+
+    // Functions
     function fractalNoise2D(
       noise2D,
       x,
@@ -130,6 +180,11 @@ export class Game extends Scene {
       }
 
       return false;
+    }
+  }
+  update(time, delta) {
+    for (const country of this.countries) {
+      country.update(time, delta);
     }
   }
 }
