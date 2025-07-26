@@ -20,7 +20,7 @@ export class Game extends Scene {
     this.simplex = createNoise2D();
 
     let mapArray = [];
-    let waterLevel = 0.20;
+    let waterLevel = 0.2;
     this.claimed = new Set();
 
     for (let y = 0; y < height; y++) {
@@ -87,6 +87,11 @@ export class Game extends Scene {
       const x = Math.floor(pointer.x);
       const y = Math.floor(pointer.y);
       const key = `${x},${y}`;
+
+      for (const country of this.countries) {
+        //country.seafaringLevel -= 0.1;
+        console.log(country.seafaringLevel);
+      }
 
       // Check if the location is over land and not already claimed
       if (

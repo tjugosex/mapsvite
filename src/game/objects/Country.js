@@ -33,6 +33,10 @@ export class Country {
     this.radiusStep = 1;
 
     this.pixelTimers = new Map();
+
+    this.delayK = 1.3;
+
+    this.seafaringLevel = 1;
   }
 
   update(time, delta) {
@@ -59,12 +63,14 @@ export class Country {
           !this.area.has(key)
         ) {
           if (this.mapArray[ny][nx] >= this.waterLevel) {
+            
             let delay;
+            let normalized = this.mapArray[ny][nx];
             if (this.area.size < 30) {
                delay = 1;
 
             } else {
-               delay = this.pixelUpdateInterval * this.mapArray[ny][nx] * 1.3;
+               delay = this.pixelUpdateInterval * normalized * this.delayK;
             }
 
             const pixelTime = this.pixelTimers.get(key) || 0;
@@ -147,9 +153,7 @@ export class Country {
       const ny = y + dy;
       const key = `${nx},${ny}`;
       if (nx >= 0 && ny >= 0 && ny < height && nx < width) {
-        if (arr[ny][nx] < this.waterLevel) {
-          return true;
-        }
+
 
         if (this.claimed.has(key) && !this.area.has(key)) {
           return true; // Adjacent to another country
