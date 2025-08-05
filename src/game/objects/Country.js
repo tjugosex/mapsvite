@@ -52,7 +52,7 @@ export class Country {
 
       for (let i = 0; i < neighbors.length; i++) {
         const [nx, ny] = neighbors[i];
-        const key = `${nx},${ny}`;
+        const key = `${nx},${ny},${this}`;
 
         if (
           nx >= 0 &&
@@ -63,14 +63,12 @@ export class Country {
           !this.area.has(key)
         ) {
           if (this.mapArray[ny][nx] >= this.waterLevel) {
-            
             let delay;
             let normalized = this.mapArray[ny][nx];
             if (this.area.size < 30) {
-               delay = 1;
-
+              delay = 1;
             } else {
-               delay = this.pixelUpdateInterval * normalized * this.delayK;
+              delay = this.pixelUpdateInterval * normalized * this.delayK;
             }
 
             const pixelTime = this.pixelTimers.get(key) || 0;
@@ -119,7 +117,6 @@ export class Country {
       [x + 1, y - 1],
       [x - 1, y + 1],
     ];
-    // Optional: randomize for chaos
 
     return dirs;
   }
@@ -153,6 +150,10 @@ export class Country {
       const ny = y + dy;
       const key = `${nx},${ny}`;
       if (nx >= 0 && ny >= 0 && ny < height && nx < width) {
+
+        if(this.mapArray[ny][nx] < this.waterLevel){
+          return true;
+        }
 
 
         if (this.claimed.has(key) && !this.area.has(key)) {
